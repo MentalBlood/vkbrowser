@@ -12,15 +12,11 @@ def captcha_handler(captcha):
 	key = input("Enter captcha code: ")
 	return captcha.try_again(key)
 
-	
-
 def parse(user_id, input_string):
 	if input_string[0] != '.': return 0
 	input_string = input_string[1:]
 	first_space = input_string.find(' ')
-	if first_space == -1:
-		if input_string in functions.call:
-			return functions.call[input_string](user_id)
+	if first_space == -1: return 0
 	command = input_string[:first_space]
 	if command in functions.call:
 		args = input_string[first_space+1:]
@@ -53,6 +49,13 @@ def main():
 			for image in reply[0]:
 				photo = upload.photo_messages(photos = image)[0]
 				attachments.append('photo{}_{}'.format(photo['owner_id'], photo['id']))
+			i = 0
+			for document in reply[2]:
+				i += 1
+				print("Uploading document " + str(i))
+				document_file = open(document, "rb")
+				document = upload.document_wall(doc = document_file.raw, title = "doc"+str(i))[0]
+				attachments.append('doc{}_{}'.format(document['owner_id'], document['id']))
 			vk.messages.send(user_id = event.user_id, attachment = ','.join(attachments), message = reply[1])
 
 if __name__ == '__main__':
