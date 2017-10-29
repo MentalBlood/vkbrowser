@@ -50,10 +50,10 @@ def main():
 			if not reply: continue
 			print(event.user_id, event.text)
 			attachments = []
-			for image in reply[1]:
-				photo = upload.photo_messages(photos = image.raw)[0]
+			for image in reply[0]:
+				photo = upload.photo_messages(photos = image)[0]
 				attachments.append('photo{}_{}'.format(photo['owner_id'], photo['id']))
-			vk.messages.send(user_id = reply[0], attachment = ','.join(attachments), message = reply[2])
+			vk.messages.send(user_id = event.user_id, attachment = ','.join(attachments), message = reply[1])
 
 if __name__ == '__main__':
 	main()

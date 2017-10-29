@@ -1,4 +1,4 @@
-import requests
+import requests, os
 session = requests.session()
 
 def ddg(user_id, query):
@@ -12,8 +12,13 @@ def ddg(user_id, query):
 		return [user_id, [image], text]
 	
 	if image_url:
-		image = session.get(image_url, stream = True)
+		image = session.get(image_url, stream = True).raw
 		
-	return [user_id, [image], text]
+	return [[image], text]
 
-call = {'ddg': ddg}
+def urlim(user_id, query):
+	os.system("cutycapt --url=" + query + " --out=url_image.png")
+	image = open("url_image.png", "rb")
+	return [[image], query]
+
+call = {'ddg': ddg, 'urlim': urlim}
