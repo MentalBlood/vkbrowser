@@ -12,7 +12,13 @@ def captcha_handler(captcha):
 	key = input("Enter captcha code: ")
 	return captcha.try_again(key)
 
+def safety_check(query):
+	if	';' in query or '|' in query or '>' in query or '<' in query or '&' in query:
+		return 0
+	return 1
+
 def parse(user_id, input_string):
+	if not (safety_check(input_string)): return 0
 	if input_string[0] != '.': return 0
 	input_string = input_string[1:]
 	first_space = input_string.find(' ')
@@ -41,10 +47,10 @@ def main():
 	longpoll = VkLongPoll(vk_session)
 
 	for event in longpoll.listen():
-		if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-			reply = parse(event.user_id, event.text)
-			if not reply: continue
+		if event.type == VkEventType.MESSAGE_NEW and event.to_me and event.text:
 			print(event.user_id, event.text)
+			reply = parse(event.user_id, event.text)
+			if not reply: continue	
 			attachments = []
 			for image in reply[0]:
 				photo = upload.photo_messages(photos = image)[0]
@@ -52,11 +58,11 @@ def main():
 			i = 0
 			for document in reply[2]:
 				i += 1
-				print("Uploading document " + str(i))
 				document_file = open(document, "rb")
-				document = upload.document_wall(doc = document_file.raw, title = "doc"+str(i))[0]
-				attachments.append('doc{}_{}'.format(document['owner_id'], document['id']))
-			vk.messages.send(user_id = event.user_id, attachment = ','.join(attachments), message = reply[1])
+				document_file = upload.document_wall(doc = document_file.raw, title = "doc"+str(i))[0]
+				os.system('rm -f ' + document)
+				attachments.append('doc{}_{}'.format(document_file['owner_id'], document_file['id']))
+			if attachments or reply[1]: vk.messages.send(user_id = event.user_id, attachment = ','.join(attachments), message = reply[1])
 
 if __name__ == '__main__':
 	main()

@@ -1,4 +1,5 @@
 import requests, os
+import json
 session = requests.session()
 koryavov = {'e': open('../KORPARSED.txt')}
 
@@ -36,15 +37,24 @@ def ddg(user_id, query):
 	
 	return [[], text, []]
 
+def DDG(user_id, query):
+	os.system('echo `duck --json -C ' + query + '` > search')
+	answers = ''
+	with open('search') as f:
+		for line in f:
+			answers += line
+	decoder = json.JSONDecoder()
+	answers = decoder.decode(answers)
+	text = ''
+	for answer in answers[:10]:
+		text += answer['title'] + '\n' + answer['url'] + '\n' + answer['abstract'] + '\n\n'
+	return [[], text, []]
+
 def urlim(user_id, query):
 	os.system("cutycapt --url=" + query + " --out=url_image.png")
 	return [[], query, ["url_image.png"]]
 
-def DDG(user_id, query):
-	urlim(user_id, "\"https://duckduckgo.com/" + query.replace(' ', '+') + "\"")
-
 def search_parsed_file(f, query):
-	print('query: ', query)
 	query = query.replace(' ', '')
 	f.seek(0, 0)
 	page = '0'
