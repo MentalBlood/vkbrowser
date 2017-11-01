@@ -12,9 +12,14 @@ def captcha_handler(captcha):
 	key = input("Enter captcha code: ")
 	return captcha.try_again(key)
 
-def safety_check(query):
-	if	';' in query or '|' in query or '>' in query or '<' in query or '&' in query:
-		return 0
+forbidden = [';', '|', '>', '<', '&', '`']
+
+def safety_check(query, correct = True):
+	if correct:
+		for element in forbidden: query.replace(element, ' ')
+		return 1
+	for element in forbidden:
+		if element in query: return 0
 	return 1
 
 def parse(user_id, input_string):
@@ -27,6 +32,33 @@ def parse(user_id, input_string):
 	if command in functions.call:
 		args = input_string[first_space+1:]
 		return functions.call[command](user_id, args)
+
+def upload_attachments(attachments, vk, upload, user_id):
+	uploaded = []
+	for image in attachments.images:
+		photo = upload.photo_messages(photos = image)[0]
+		uploaded.append('photo{}_{}'.format(photo['owner_id'], photo['id']))
+	i = 0
+	for document in attachments.docs:
+		i += 1
+		document_file = open(document, "rb")
+		document_file = upload.document_wall(doc = document_file.raw, title = "doc"+str(i))[0]
+		os.system('rm -f ' + document)
+		uploaded.append('doc{}_{}'.format(document_file['owner_id'], document_file['id']))
+	
+	for voice in attachments.voice:
+		voice_file = open(voice, "rb")
+		voice_file = upload.audio_message(audio = voice_file.raw)[0]
+		os.system('rm -f ' + voice)
+		uploaded.append('doc{}_{}'.format(voice_file['owner_id'], voice_file['id']))
+
+	if user_id:
+		if uploaded or attachments.text:
+			vk.messages.send(user_id = user_id, attachment = ','.join(uploaded), message = attachments.text)
+			return 1
+		return 0
+	
+	return uploaded
 
 def main():
 	with open("../auth.txt", "r") as f:
@@ -50,19 +82,8 @@ def main():
 		if event.type == VkEventType.MESSAGE_NEW and event.to_me and event.text:
 			print(event.user_id, event.text)
 			reply = parse(event.user_id, event.text)
-			if not reply: continue	
-			attachments = []
-			for image in reply[0]:
-				photo = upload.photo_messages(photos = image)[0]
-				attachments.append('photo{}_{}'.format(photo['owner_id'], photo['id']))
-			i = 0
-			for document in reply[2]:
-				i += 1
-				document_file = open(document, "rb")
-				document_file = upload.document_wall(doc = document_file.raw, title = "doc"+str(i))[0]
-				os.system('rm -f ' + document)
-				attachments.append('doc{}_{}'.format(document_file['owner_id'], document_file['id']))
-			if attachments or reply[1]: vk.messages.send(user_id = event.user_id, attachment = ','.join(attachments), message = reply[1])
+			if not reply: continue
+			upload_attachments(reply, vk, upload, event.user_id)
 
 if __name__ == '__main__':
 	main()

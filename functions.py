@@ -3,6 +3,14 @@ import json
 session = requests.session()
 koryavov = {'e': open('../KORPARSED.txt')}
 
+class attachments():
+	def __init__(self, images = [], text = '', docs = [], voice = [], audio = []):
+		self.images = images
+		self.text = text
+		self.docs = docs
+		self.voice = voice
+		self.audio = audio
+
 def ddg(user_id, query):
 	query = query[:255]
 	response = session.get('http://api.duckduckgo.com/', params={'q': query, 'format': 'json'} ).json()
@@ -28,14 +36,14 @@ def ddg(user_id, query):
 				temp = str(temp)
 				temp = temp[temp.find('>')+1:].replace('</a>', '\n')
 				text += temp + '\n\n'
-		if text: return [[], text, []]
-		return [[], 'No interesting results', []]
+		if text: return attachments(text = text) 
+		return attachments(text = 'No results')
 	
 	if image_url:
 		image = session.get(image_url, stream = True).raw
-		return [[image], text, []]
+		return attachments(text = text, images = [image])
 	
-	return [[], text, []]
+	return attachments(text = text)
 
 def DDG(user_id, query):
 	os.system('echo `duck --json -C ' + query + '` > search')
@@ -48,11 +56,11 @@ def DDG(user_id, query):
 	text = ''
 	for answer in answers[:10]:
 		text += answer['title'] + '\n' + answer['url'] + '\n' + answer['abstract'] + '\n\n'
-	return [[], text, []]
+	return attachments(text = text)
 
 def urlim(user_id, query):
 	os.system("cutycapt --url=" + query + " --out=url_image.png")
-	return [[], query, ["url_image.png"]]
+	return attachments(images = ['url_image.png'])
 
 def search_parsed_file(f, query):
 	query = query.replace(' ', '')
@@ -69,6 +77,25 @@ def search_parsed_file(f, query):
 
 def ks(user_id, query):
 	if query[0] in koryavov:
-		return [[], search_parsed_file(koryavov[query[0]], query[2:]), []]
+		return attachments(text = search_parsed_file(koryavov[query[0]], query[2:]))
 
-call = {'ddg': ddg, 'urlim': urlim, 'DDG': DDG, 'ks': ks}
+def tts(user_id, query):
+	os.system('espeak -w voice.wav "' + query + '"')
+	return attachments(voice = ['voice.wav'])
+
+def TTS(user_id, query):
+	n = query[:query.find(' ')]
+	if not n.isnumeric(): return attachments()
+	
+	n = int(n)
+	file_names = []
+	while len(query) > n:
+		file_names.append('voice' + str(len(file_names)) + '.wav')
+		os.system('espeak -w ' + file_names[-1] + ' "' + query[:n] + '"')
+		query = query[n:]
+	if len(query):
+		file_names.append('voice' + str(len(file_names)) + '.wav')
+		os.system('espeak -w ' + file_names[-1] + ' "' + query + '"')
+	return attachments(voice = file_names)
+
+call = {'ddg': ddg, 'urlim': urlim, 'DDG': DDG, 'ks': ks, 'tts': tts, 'TTS': TTS}

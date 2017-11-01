@@ -3,6 +3,12 @@ Bot for access the whole Internet through VK
 
 Commands:
 
-	get main result of search in DuckDuckGo: .ddg [query]
+	.ddg query - search DuckDuckGo using API
 
-	get webpage image: .urlim [url]
+	.DDG query - search DuckDuckGo
+
+	.urlim url - get webpage image
+
+	.tts text - text-to-speech using audio message
+
+	.TTS n text - text-to-speech using audio messages (splits text by parts with no more n symbols each)
