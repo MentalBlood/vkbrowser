@@ -1,5 +1,5 @@
 # vkbrowser
-Bot for access the whole Internet through VK
+Bot for access Internet through VK
 
 Commands:
 
